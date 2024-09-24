@@ -1,4 +1,4 @@
-From a2eaec00275afdeccd42d641f3e289258f7cee1f Mon Sep 17 00:00:00 2001
+From 892948abac32753660f04786a1f1d9bcd8c87ddf Mon Sep 17 00:00:00 2001
 From: Shane Freeder <theboyetronic@gmail.com>
 Date: Sun, 15 Oct 2023 00:36:38 +0100
 Subject: [PATCH] Prevent proxy commands from breaking the chat chain system
@@ -19,12 +19,12 @@ index 735026d7..55a67abb 100644
      // Waterfall end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index b0473509..f25d3fab 100644
+index 0f99ea8b..7c258140 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-@@ -558,6 +558,13 @@ public enum Protocol
-                     map( ProtocolConstants.MINECRAFT_1_19_1, 0x05 ),
-                     map( ProtocolConstants.MINECRAFT_1_20_5, 0x06 )
+@@ -582,6 +582,13 @@ public enum Protocol
+                     map( ProtocolConstants.MINECRAFT_1_20_5, 0x06 ),
+                     map( ProtocolConstants.MINECRAFT_1_21_2, 0x07 )
              );
 +            // Waterfall start
 +            TO_SERVER.registerPacket(
@@ -76,7 +76,7 @@ index 00000000..08ecf2a3
 +    }
 +}
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientCommand.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientCommand.java
-index 887ff29f..d4700090 100644
+index 33c838f9..f259ee91 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientCommand.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientCommand.java
 @@ -108,4 +108,9 @@ public class ClientCommand extends DefinedPacket
@@ -130,5 +130,5 @@ index 88ad9a4c..b8766545 100644
          }
          throw CancelSendSignal.INSTANCE;
 -- 
-2.45.1.windows.1
+2.46.1.windows.1
 

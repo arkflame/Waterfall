@@ -1,4 +1,4 @@
-From f2f55cb7743a44bc8d0db757315cbfab4d43f22f Mon Sep 17 00:00:00 2001
+From f201c29e55353a602773e46dd145c869777b2c7a Mon Sep 17 00:00:00 2001
 From: Tux <write@imaginarycode.com>
 Date: Thu, 19 May 2016 11:34:52 -0700
 Subject: [PATCH] Fetch modules from the Waterfall API endpoint
@@ -6,7 +6,7 @@ Subject: [PATCH] Fetch modules from the Waterfall API endpoint
 Don't fetch from the BungeeCord CI, as that only has their modules
 
 diff --git a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
-index 2536435c..5bb86152 100644
+index 064639f3..4110bdc3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 +++ b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 @@ -1,10 +1,10 @@
@@ -21,9 +21,9 @@ index 2536435c..5bb86152 100644
 +import java.nio.file.StandardCopyOption;
  import lombok.Data;
  import net.md_5.bungee.Util;
- 
-@@ -18,13 +18,21 @@ public class JenkinsModuleSource implements ModuleSource
-         System.out.println( "Attempting to Jenkins download module " + module.getName() + " v" + version.getBuild() );
+ import net.md_5.bungee.api.ProxyServer;
+@@ -19,13 +19,21 @@ public class JenkinsModuleSource implements ModuleSource
+         ProxyServer.getInstance().getLogger().info( "Attempting to Jenkins download module " + module.getName() + " v" + version.getBuild() );
          try
          {
 -            URL website = new URL( "https://ci.md-5.net/job/BungeeCord/" + version.getBuild() + "/artifact/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
@@ -43,9 +43,9 @@ index 2536435c..5bb86152 100644
  
 -            Files.write( ByteStreams.toByteArray( con.getInputStream() ), module.getFile() );
 +            Files.copy( con.getInputStream(), module.getFile().toPath(), StandardCopyOption.REPLACE_EXISTING );
-             System.out.println( "Download complete" );
+             ProxyServer.getInstance().getLogger().info( "Download complete" );
          } catch ( IOException ex )
          {
 -- 
-2.43.0
+2.46.1.windows.1
 

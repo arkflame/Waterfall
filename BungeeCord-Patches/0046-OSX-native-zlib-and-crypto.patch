@@ -1,16 +1,16 @@
-From 5ea6ad7cd865bec92737ce8a665144ce1077c86e Mon Sep 17 00:00:00 2001
+From 754d9977b6361facda3bbe46f18e8548c38cc958 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:25:52 -0600
 Subject: [PATCH] OSX native zlib and crypto
 
 
 diff --git a/native/compile-native.sh b/native/compile-native.sh
-index 5b6e54c4..1ea919cc 100755
+index a47bc812..744b7150 100755
 --- a/native/compile-native.sh
 +++ b/native/compile-native.sh
-@@ -8,20 +8,17 @@ echo "Compiling mbedtls"
+@@ -10,20 +10,17 @@ echo "Compiling mbedtls"
  echo "Compiling zlib"
- (cd zlib && CFLAGS=-fPIC ./configure --static && make)
+ (cd zlib && CFLAGS="-fPIC -DNO_GZIP" ./configure --static && make)
  
 -CC="gcc"
 -CFLAGS="-c -fPIC -O3 -Wall -Werror -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/"
@@ -41,12 +41,12 @@ index 5b6e54c4..1ea919cc 100755
 +$CXX -Imbedtls/include src/main/c/NativeCipherImpl.cpp -o src/main/resources/${PREFIX:-}native-cipher.so mbedtls/library/libmbedcrypto.a $CXX_ARGS
 +$CXX -Izlib src/main/c/NativeCompressImpl.cpp -o src/main/resources/${PREFIX:-}native-compress.so zlib/libz.a $CXX_ARGS
 diff --git a/native/src/main/c/NativeCipherImpl.c b/native/src/main/c/NativeCipherImpl.c
-index 727a2f1f..a0b9319b 100644
+index 020aaa1d..9c3a7578 100644
 --- a/native/src/main/c/NativeCipherImpl.c
 +++ b/native/src/main/c/NativeCipherImpl.c
-@@ -5,6 +5,14 @@
- #include "shared.h"
- #include "net_md_5_bungee_jni_cipher_NativeCipherImpl.h"
+@@ -8,6 +8,14 @@
+ // Hack to keep the compiler from optimizing the memset away
+ static void *(*const volatile memset_func)(void *, int, size_t) = memset;
  
 +// Support for CentOS 6
 +#if __linux__ // Waterfall
@@ -60,11 +60,11 @@ index 727a2f1f..a0b9319b 100644
  
  typedef struct crypto_context {
 diff --git a/native/src/main/c/NativeCompressImpl.c b/native/src/main/c/NativeCompressImpl.c
-index 7fb8e6b9..64402246 100644
+index dee50c6a..7f91b9b9 100644
 --- a/native/src/main/c/NativeCompressImpl.c
 +++ b/native/src/main/c/NativeCompressImpl.c
-@@ -5,6 +5,14 @@
- #include "shared.h"
+@@ -8,6 +8,14 @@
+ #endif
  #include "net_md_5_bungee_jni_zlib_NativeCompressImpl.h"
  
 +// Support for CentOS 6
@@ -79,25 +79,37 @@ index 7fb8e6b9..64402246 100644
  
  static jclass classID;
 diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
-index 62bdaa0e..f4f6e6ab 100644
+index 4426823c..a13e88b4 100644
 --- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 +++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
-@@ -20,6 +20,7 @@ public final class NativeCode<T>
+@@ -27,6 +27,7 @@ public final class NativeCode<T>
  
-     public NativeCode(String name, Supplier<? extends T> javaImpl, Supplier<? extends T> nativeImpl)
+     public NativeCode(String name, Supplier<? extends T> javaImpl, Supplier<? extends T> nativeImpl, boolean extendedSupportCheck)
      {
 +        if ("Mac OS X".equals( System.getProperty( "os.name" ))) name = "osx-" + name; // Waterfall
          this.name = name;
          this.javaImpl = javaImpl;
          this.nativeImpl = nativeImpl;
-@@ -75,6 +76,6 @@ public final class NativeCode<T>
+@@ -95,7 +96,7 @@ public final class NativeCode<T>
  
      public static boolean isSupported()
      {
--        return "Linux".equals( System.getProperty( "os.name" ) ) && "amd64".equals( System.getProperty( "os.arch" ) );
-+        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) ); // Waterfall
+-        return "Linux".equals( System.getProperty( "os.name" ) ) && ( isAmd64() || isAarch64() );
++        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && (isAmd64() || isx86() ); // Waterfall;
      }
- }
+ 
+     private static boolean isAmd64()
+@@ -103,6 +104,10 @@ public final class NativeCode<T>
+         return "amd64".equals( System.getProperty( "os.arch" ) );
+     }
+ 
++    private static boolean isx86() {
++        return "x86_64".equals( System.getProperty( "os.arch" ));
++    }
++
+     private static boolean isAarch64()
+     {
+         return "aarch64".equals( System.getProperty( "os.arch" ) );
 diff --git a/native/src/main/resources/osx-native-cipher.so b/native/src/main/resources/osx-native-cipher.so
 new file mode 100755
 index 0000000000000000000000000000000000000000..9892237878bae2b320d0c6390d5049a91318c77d
@@ -1231,5 +1243,5 @@ literal 0
 HcmV?d00001
 
 -- 
-2.45.1.windows.1
+2.46.1.windows.1
 
